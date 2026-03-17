@@ -9,7 +9,7 @@ RUN npm run build
 # Stage 2: Build Backend
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend-build
 WORKDIR /app
-COPY ManagerAI.sln ./
+COPY PlanAI.sln ./
 COPY PlanAI.csproj ./
 RUN dotnet restore
 COPY . ./
