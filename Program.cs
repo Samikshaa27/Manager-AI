@@ -47,15 +47,13 @@ builder.Services.AddHttpClient("OpenAI", client =>
 // DATABASE
 ///////////////////////////////////////////////////////////////
 
+// Use PostgreSQL for Production (Railway/Neon)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=planair.db"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 ///////////////////////////////////////////////////////////////
 // JWT AUTHENTICATION
 ///////////////////////////////////////////////////////////////
-
-// Do NOT clear the map, use standard claim types for better compatibility
-// JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var jwtSecret = builder.Configuration["Auth:JwtSecret"] ?? "planai-super-secret-key-32-chars-minimum";
 var key = Encoding.UTF8.GetBytes(jwtSecret);
@@ -183,4 +181,6 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-app.Run();
+// Dynamic Port Binding for Railway
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Run($"http://0.0.0.0:{port}");
