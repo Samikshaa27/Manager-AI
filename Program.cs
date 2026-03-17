@@ -88,7 +88,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("DefaultCorsPolicy", policy =>
     {
         policy.WithOrigins(
-            "https://manager-ai-lyart.vercel.app",
+            
             "https://manager-ai-lyart.vercel.app"
         )
         .AllowAnyHeader()
