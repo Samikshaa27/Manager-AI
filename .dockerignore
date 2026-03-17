@@ -1,0 +1,16 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/publish
+.dockerignore
+Dockerfile
+planair.db
+planair.db-shm
+planair.db-wal
+build_errors.txt
+backend_log.txt
+server_log.txt
+server_error.txt
