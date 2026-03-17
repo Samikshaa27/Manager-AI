@@ -43,13 +43,12 @@ builder.Services.AddHttpClient("OpenAI", client =>
     client.BaseAddress = new Uri("https://api.groq.com/openai/");
 });
 
-///////////////////////////////////////////////////////////////
-// DATABASE
-///////////////////////////////////////////////////////////////
-
 // Use PostgreSQL for Production (Railway/Neon)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()
+    ));
 
 ///////////////////////////////////////////////////////////////
 // JWT AUTHENTICATION
@@ -177,8 +176,15 @@ app.MapFallbackToFile("index.html");
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Migration failed: " + ex.Message);
+    }
 }
 
 // Dynamic Port Binding for Railway
