@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text font-sans antialiased min-h-screen relative overflow-x-hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading text-text;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 50% 50%, rgba(217, 70, 239, 0.15), transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15), transparent 30%);
+    z-index: -1;
+    animation: drift 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-5%, 5%); }
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .btn-primary {
+    @apply btn bg-primary text-primary-foreground hover:bg-primary-hover shadow-[0_4px_14px_rgba(217,70,239,0.3)] hover:shadow-[0_6px_20px_rgba(217,70,239,0.4)];
+  }
+  
+  .btn-secondary {
+    @apply btn bg-white/60 border border-primary/20 text-primary hover:bg-white/80 backdrop-blur-md;
+  }
+  
+  .glass-card {
+    @apply bg-surface backdrop-blur-xl border border-white shadow-xl rounded-3xl p-6 transition-all duration-300;
+  }
+
+  .glass-tab {
+    @apply bg-white/40 backdrop-blur-md rounded-xl transition-all duration-300 border border-white hover:bg-white/60 text-text font-medium px-4 py-2;
+  }
+  
+  .glass-tab-active {
+    @apply bg-white/80 backdrop-blur-lg border border-primary/30 text-primary shadow-[0_4px_14px_rgba(217,70,239,0.15)];
+  }
+
+  .dot-grid {
+    background-image: 
+      linear-gradient(to right, rgba(217, 70, 239, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(217, 70, 239, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    background-position: center center;
+    mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/20 rounded-full hover:bg-primary/40 transition-colors;
+}

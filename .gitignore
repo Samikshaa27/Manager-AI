@@ -1,0 +1,38 @@
+# .NET
+bin/
+obj/
+out/
+publish/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+planair.db
+planair.db-shm
+planair.db-wal
+appsettings.Development.json
+*.txt
+*.ps1
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# VS
+.vs/
