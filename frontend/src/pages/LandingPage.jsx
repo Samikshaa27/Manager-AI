@@ -92,34 +92,34 @@ const LandingPage = ({ onLogin }) => {
         </motion.div>
 
         {/* Connected Graph Lines */}
-        <svg className="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
+        <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
           <motion.path 
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{ duration: 3, ease: "easeInOut" }}
-            d="M 12vw 23vh Q 35vw 15vh 86vw 28vh" 
-            fill="none" stroke="url(#nodeGrad1)" strokeWidth="2" strokeDasharray="8 8"
+            d="M 12 23 Q 35 15 86 28" 
+            fill="none" stroke="url(#nodeGrad1)" strokeWidth="0.5" strokeDasharray="2 2"
           />
           <motion.path 
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{ duration: 3.5, ease: "easeInOut", delay: 0.5 }}
-            d="M 17vw 68vh Q 50vw 80vh 83vw 69vh" 
-            fill="none" stroke="url(#nodeGrad2)" strokeWidth="2" strokeDasharray="8 8"
+            d="M 17 68 Q 50 80 83 69" 
+            fill="none" stroke="url(#nodeGrad2)" strokeWidth="0.5" strokeDasharray="2 2"
           />
           <motion.path 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 2, delay: 2 }}
-            d="M 12vw 23vh L 17vw 68vh" 
-            fill="none" stroke="url(#nodeGrad1)" strokeWidth="1" strokeDasharray="4 4"
+            d="M 12 23 L 17 68" 
+            fill="none" stroke="url(#nodeGrad1)" strokeWidth="0.3" strokeDasharray="1 1"
           />
           <motion.path 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 2, delay: 2.5 }}
-            d="M 86vw 28vh L 83vw 69vh" 
-            fill="none" stroke="url(#nodeGrad2)" strokeWidth="1" strokeDasharray="4 4"
+            d="M 86 28 L 83 69" 
+            fill="none" stroke="url(#nodeGrad2)" strokeWidth="0.3" strokeDasharray="1 1"
           />
           <defs>
             <linearGradient id="nodeGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
