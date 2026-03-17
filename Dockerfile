@@ -21,8 +21,6 @@ WORKDIR /app
 COPY --from=backend-build /app/publish .
 COPY --from=frontend-build /app/frontend/dist ./wwwroot
 
-# Set environment variables
-ENV ASPNETCORE_URLS=http://+:80
-EXPOSE 80
+# Port is handled dynamically in Program.cs via PORT environment variable
 
 ENTRYPOINT ["dotnet", "PlanAI.dll"]
