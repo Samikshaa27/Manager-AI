@@ -5,8 +5,6 @@ using Microsoft.OpenApi.Models;
 using PlanAI.Agents;
 using PlanAI.Data;
 using PlanAI.Services;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,7 +33,7 @@ builder.Services.AddScoped<ProjectOrchestrator>();
 builder.Services.AddScoped<LlmService>();
 
 ///////////////////////////////////////////////////////////////
-// HTTP CLIENT FOR GROQ / OPENAI
+// HTTP CLIENT
 ///////////////////////////////////////////////////////////////
 
 builder.Services.AddHttpClient("OpenAI", client =>
@@ -43,7 +41,10 @@ builder.Services.AddHttpClient("OpenAI", client =>
     client.BaseAddress = new Uri("https://api.groq.com/openai/");
 });
 
-// Use PostgreSQL for Production (Railway/Neon)
+///////////////////////////////////////////////////////////////
+// DATABASE (Neon PostgreSQL)
+///////////////////////////////////////////////////////////////
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -56,8 +57,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var jwtSecret = builder.Configuration["Auth:JwtSecret"] ?? "planai-super-secret-key-32-chars-minimum";
 var key = Encoding.UTF8.GetBytes(jwtSecret);
-
-Console.WriteLine($"JWT STARTUP: Secret Length={jwtSecret.Length}, Key Bytes={key.Length}");
 
 builder.Services
 .AddAuthentication(options => {
@@ -73,40 +72,27 @@ builder.Services
     {
         ValidateIssuer = false,
         ValidateAudience = false,
-
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
-    };
-
-    options.Events = new JwtBearerEvents
-    {
-        OnAuthenticationFailed = context =>
-        {
-            Console.WriteLine($"JWT AUTH FAILED: {context.Exception.Message}");
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = context =>
-        {
-            Console.WriteLine("JWT TOKEN VALIDATED successfully for " + context.Principal.Identity.Name);
-            return Task.CompletedTask;
-        }
     };
 });
 
 ///////////////////////////////////////////////////////////////
-// CORS
+// ✅ CORS (FIXED WITH YOUR FRONTEND URL)
 ///////////////////////////////////////////////////////////////
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DefaultCorsPolicy", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.WithOrigins(
+            "https://manager-ai-lyart.vercel.app"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
 });
 
@@ -157,7 +143,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-app.UseCors("DefaultCorsPolicy");
+app.UseCors("DefaultCorsPolicy"); // MUST be before auth
 
 if (app.Environment.IsDevelopment())
 {
@@ -187,6 +173,6 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Dynamic Port Binding for Railway
+// Railway dynamic port
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");
