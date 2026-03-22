@@ -177,7 +177,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapFallbackToFile("index.html");
+
+// Only fall back to index.html for non-API routes (SPA routing support)
+// API routes must NOT fall through to index.html
+app.MapFallbackToFile("{*path:regex(^(?!api/).*$)}", "index.html");
 
 using (var scope = app.Services.CreateScope())
 {
