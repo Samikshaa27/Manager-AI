@@ -93,6 +93,7 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(
+                "https://projectmanager-ai.vercel.app",
                 "https://manager-ai-lyart.vercel.app",
                 "https://manager-ai-1lyart.vercel.app",
                 "http://localhost:5173",
