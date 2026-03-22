@@ -80,21 +80,26 @@ builder.Services
 });
 
 ///////////////////////////////////////////////////////////////
-// ✅ CORS (FIXED WITH YOUR FRONTEND URL)
+// ✅ CORS
 ///////////////////////////////////////////////////////////////
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DefaultCorsPolicy", policy =>
     {
-        policy.WithOrigins(
-            "https://manager-ai-1lyart.vercel.app",
-            "http://localhost:5173",
-            "http://localhost:3000"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        policy
+            // Accept any vercel.app preview URL + localhost dev servers
+            .SetIsOriginAllowed(origin =>
+            {
+                if (string.IsNullOrEmpty(origin)) return false;
+                var uri = new Uri(origin);
+                return uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)
+                    || uri.Host == "localhost"
+                    || uri.Host == "127.0.0.1";
+            })
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -145,7 +150,19 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-app.UseCors("DefaultCorsPolicy"); // MUST be before auth
+// CORS must be the very first middleware
+app.UseCors("DefaultCorsPolicy");
+
+// Short-circuit all OPTIONS preflight requests immediately after CORS
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 204;
+        return;
+    }
+    await next();
+});
 
 if (app.Environment.IsDevelopment())
 {
