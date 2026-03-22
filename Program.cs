@@ -150,6 +150,14 @@ var app = builder.Build();
 // CORS must be the very first middleware — handles preflight OPTIONS automatically
 app.UseCors("DefaultCorsPolicy");
 
+// Global exception handler — keeps CORS headers alive on any unhandled crash
+app.UseExceptionHandler(errApp => errApp.Run(async ctx =>
+{
+    ctx.Response.StatusCode = 500;
+    ctx.Response.ContentType = "application/json";
+    await ctx.Response.WriteAsync("{\"error\":\"An unexpected server error occurred.\"}");
+}));
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
