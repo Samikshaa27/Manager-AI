@@ -91,14 +91,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DefaultCorsPolicy", policy =>
     {
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[]
+        {
+            "https://projectmanager-ai.vercel.app",
+            "https://manager-ai-lyart.vercel.app",
+            "https://manager-ai-1lyart.vercel.app",
+            "http://localhost:5173",
+            "http://localhost:3000"
+        };
+
         policy
-            .WithOrigins(
-                "https://projectmanager-ai.vercel.app",
-                "https://manager-ai-lyart.vercel.app",
-                "https://manager-ai-1lyart.vercel.app",
-                "http://localhost:5173",
-                "http://localhost:3000"
-            )
+            .WithOrigins(allowedOrigins)
             .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .WithHeaders("Content-Type", "Authorization")
             .AllowCredentials();

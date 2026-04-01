@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: manager-ai
+    env: docker
+    plan: free
+    dockerContext: .
+    dockerfile: Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: ConnectionStrings__DefaultConnection
+        sync: false # User should set this manually or via Secret File/Env Var on Render UI
+      - key: OpenAI__ApiKey
+        sync: false
+      - key: Auth__JwtSecret
+        sync: false
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
