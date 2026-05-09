@@ -37,7 +37,7 @@ namespace PlanAI.Agents
         {
             if (string.IsNullOrWhiteSpace(input))
             {
-                return ("Other", 0);
+                throw new ArgumentException("Description cannot be empty");
             }
 
             var text = input.ToLowerInvariant();

@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE,
   timeout: 60000, // 60 seconds for AI generation
 });
 
@@ -19,6 +19,18 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Response interceptor to unwrap ApiResponse format
+api.interceptors.response.use(
+  (response) => {
+    if (response.data && response.data.hasOwnProperty('success')) {
+      // Pass the underlying data so components using res.data continue to work
+      return { ...response, data: response.data.data };
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
+
 export const authService = {
   login: (email, password) => api.post('/api/auth/login', { email, password }),
   register: (data) => api.post('/api/auth/register', data),
@@ -30,16 +42,16 @@ export const projectService = {
   getAll: () => api.get('/api/projects'),
   getById: (id) => api.get(`/api/projects/${id}`),
   generate: (data) => api.post('/api/projects/generate', data),
-  assignTask: (projectId, taskId, userId) => api.post(`/api/projects/${projectId}/assign`, { taskId, userId }),
+  assignTask: (projectId, taskId, userId) => api.put(`/api/tasks/${taskId}/assign`, { userId }),
   getDashboard: (id) => api.get(`/api/projects/${id}/dashboard`),
 };
 
 export const taskService = {
-  getTasks: () => api.get('/api/tasks'),
-  getMyTasks: () => api.get('/api/tasks/my-tasks'),
+  getTasks: (projectId) => api.get(`/api/projects/${projectId}/tasks`),
+  getMyTasks: () => api.get('/api/tasks/my-tasks'), // Keep this if we have it
   completeTask: (id) => api.put(`/api/tasks/${id}/complete`),
-  updateStatus: (id, status) => api.put(`/api/tasks/${id}`, { status }),
-  createTask: (data) => api.post('/api/tasks', data),
+  updateStatus: (id, status) => api.put(`/api/tasks/${id}/status`, { status }),
+  createTask: (data) => api.post(`/api/projects/${data.projectId || 'new'}/tasks`, data),
 };
 
 export const dashboardService = {

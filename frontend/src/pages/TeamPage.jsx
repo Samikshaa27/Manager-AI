@@ -102,7 +102,7 @@ const TeamPage = ({ user, onLogout }) => {
                   <div className="flex items-start justify-between mb-6 relative z-10">
                     <div className={cn(
                       "w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-sm group-hover:scale-110 transition-transform duration-300",
-                      member.role === 'ProjectManager' ? "bg-primary/10 text-primary border border-primary/20 shadow-sm" : "bg-white text-text border border-primary/20"
+                      member.role === 'Admin' ? "bg-primary/10 text-primary border border-primary/20 shadow-sm" : "bg-white text-text border border-primary/20"
                     )}>
                       {(member.name || 'U').charAt(0)}
                     </div>
@@ -115,10 +115,10 @@ const TeamPage = ({ user, onLogout }) => {
                     <h3 className="text-2xl font-bold text-text mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-primary group-hover:to-secondary transition-all">{member.name || 'Unknown User'}</h3>
                     <div className={cn(
                       "flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl w-fit border backdrop-blur-md shadow-sm",
-                      member.role === 'ProjectManager' ? "bg-primary/10 text-primary border-primary/20" : "bg-primary/5 text-text-muted border-primary/10"
+                      member.role === 'Admin' ? "bg-primary/10 text-primary border-primary/20" : "bg-primary/5 text-text-muted border-primary/10"
                     )}>
-                      <Shield size={14} className={member.role === 'ProjectManager' ? "text-primary" : "text-text-muted"} />
-                      {member.role === 'ProjectManager' ? 'Lead Manager' : 'Team Associate'}
+                      <Shield size={14} className={member.role === 'Admin' ? "text-primary" : "text-text-muted"} />
+                      {member.role === 'Admin' ? 'Lead Manager' : 'Team Associate'}
                     </div>
                   </div>
 
@@ -133,7 +133,7 @@ const TeamPage = ({ user, onLogout }) => {
                       <div className="p-2 bg-white rounded-lg border border-primary/10 shadow-sm">
                         <Shield size={16} className="text-orange-500/80" />
                       </div>
-                      <span>Permission Level: <strong className="text-primary">{member.role === 'ProjectManager' ? 'High' : 'Standard'}</strong></span>
+                      <span>Permission Level: <strong className="text-primary">{member.role === 'Admin' ? 'High' : 'Standard'}</strong></span>
                     </div>
                   </div>
 

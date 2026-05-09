@@ -82,6 +82,9 @@ namespace PlanAI.Agents
         public async Task ExecuteAsync(ProjectContext context)
         {
             string description = context.Description ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(description))
+                throw new ArgumentException("Description cannot be empty");
+                
             string category = context.Category ?? "Other";
 
             var tasks = new List<ProjectTask>();

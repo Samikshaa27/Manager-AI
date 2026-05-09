@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlanAI.Data;
+using PlanAI.Helpers;
+using Microsoft.AspNetCore.Http;
 
 namespace PlanAI.Controllers
 {
@@ -21,10 +23,12 @@ namespace PlanAI.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetStats()
         {
             var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized(ApiResponse<object>.Fail("Unauthorized"));
 
             // Get all project IDs owned by the user
             var userProjectIds = await _db.ProjectPlans
@@ -44,13 +48,13 @@ namespace PlanAI.Controllers
             
             var overdueTasks = allTasks.Count(t => t.Status == PlanAI.Models.TaskStatus.Blocked);
 
-            return Ok(new
+            return Ok(ApiResponse<object>.Ok(new
             {
                 totalTasks,
                 completedTasks,
                 inProgressTasks,
                 overdueTasks
-            });
+            }));
         }
     }
 }

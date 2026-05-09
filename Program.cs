@@ -16,6 +16,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options => {
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = string.Join("; ", context.ModelState.SelectMany(kvp => kvp.Value.Errors.Select(e => $"{kvp.Key}: {e.ErrorMessage}")));
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(PlanAI.Helpers.ApiResponse<object>.Fail(errors));
+        };
     });
 
 ///////////////////////////////////////////////////////////////
@@ -161,9 +169,11 @@ app.UseCors("DefaultCorsPolicy");
 // Global exception handler — keeps CORS headers alive on any unhandled crash
 app.UseExceptionHandler(errApp => errApp.Run(async ctx =>
 {
+    var exceptionHandlerPathFeature = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+    var exception = exceptionHandlerPathFeature?.Error;
     ctx.Response.StatusCode = 500;
     ctx.Response.ContentType = "application/json";
-    await ctx.Response.WriteAsync("{\"error\":\"An unexpected server error occurred.\"}");
+    await ctx.Response.WriteAsync($"{{\"error\":\"{exception?.Message}\", \"trace\":\"{exception?.StackTrace?.Replace("\"", "'").Replace("\n", "\\n").Replace("\r", "\\r")}\"}}");
 }));
 
 if (app.Environment.IsDevelopment())
@@ -184,19 +194,26 @@ app.MapControllers();
 // API routes must NOT fall through to index.html
 app.MapFallbackToFile("{*path:regex(^(?!api/).*$)}", "index.html");
 
-using (var scope = app.Services.CreateScope())
+if (app.Environment.EnvironmentName != "Testing")
 {
-    try
+    using (var scope = app.Services.CreateScope())
     {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("Migration failed: " + ex.Message);
+        try
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
+            {
+                db.Database.Migrate();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Migration failed: " + ex.Message);
+        }
     }
 }
 
-// Railway dynamic port
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");
+
+public partial class Program { }

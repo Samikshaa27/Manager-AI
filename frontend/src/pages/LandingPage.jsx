@@ -12,7 +12,7 @@ const LandingPage = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
-  const [role, setRole] = useState('TeamMember');
+  const [role, setRole] = useState('Member');
 
   const handleQuickLogin = (role) => {
     const demoEmail = role === 'manager' ? 'manager@managerai.com' : 'member@managerai.com';
@@ -245,20 +245,20 @@ const LandingPage = ({ onLogin }) => {
                     <div className="flex gap-4">
                        <button 
                          type="button"
-                         onClick={() => setRole('ProjectManager')}
+                         onClick={() => setRole('Admin')}
                          className={cn(
                            "flex-1 py-3 rounded-2xl border text-sm font-bold transition-all shadow-sm",
-                           role === 'ProjectManager' ? "bg-primary border-primary text-white" : "bg-white border-primary/20 text-text-muted hover:border-primary/50 hover:text-primary"
+                           role === 'Admin' ? "bg-primary border-primary text-white" : "bg-white border-primary/20 text-text-muted hover:border-primary/50 hover:text-primary"
                          )}
                        >
                          Manager
                        </button>
                        <button 
                          type="button"
-                         onClick={() => setRole('TeamMember')}
+                         onClick={() => setRole('Member')}
                          className={cn(
                            "flex-1 py-3 rounded-2xl border text-sm font-bold transition-all shadow-sm",
-                           role === 'TeamMember' ? "bg-secondary border-secondary text-white" : "bg-white border-primary/20 text-text-muted hover:border-secondary/50 hover:text-secondary"
+                           role === 'Member' ? "bg-secondary border-secondary text-white" : "bg-white border-primary/20 text-text-muted hover:border-secondary/50 hover:text-secondary"
                          )}
                        >
                          Member

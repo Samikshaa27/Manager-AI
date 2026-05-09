@@ -60,34 +60,34 @@ function App() {
       <Routes>
         <Route 
           path="/" 
-          element={user ? <Navigate to={user.role === 'ProjectManager' ? '/dashboard' : '/my-tasks'} /> : <LandingPage onLogin={handleLogin} />} 
+          element={user ? <Navigate to={user.role === 'Admin' ? '/dashboard' : '/my-tasks'} /> : <LandingPage onLogin={handleLogin} />} 
         />
         {/* Manager Routes */}
         <Route 
           path="/dashboard" 
-          element={user?.role === 'ProjectManager' ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+          element={user?.role === 'Admin' ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         <Route 
           path="/projects" 
-          element={user?.role === 'ProjectManager' ? <ProjectsPage user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+          element={user?.role === 'Admin' ? <ProjectsPage user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         <Route 
           path="/kanban" 
-          element={user?.role === 'ProjectManager' ? <KanbanPage user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+          element={user?.role === 'Admin' ? <KanbanPage user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         <Route 
           path="/team" 
-          element={user?.role === 'ProjectManager' ? <TeamPage user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+          element={user?.role === 'Admin' ? <TeamPage user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         <Route 
           path="/reports" 
-          element={user?.role === 'ProjectManager' ? <ReportsPage user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+          element={user?.role === 'Admin' ? <ReportsPage user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         
         {/* Member Routes */}
         <Route 
           path="/my-tasks" 
-          element={user?.role === 'TeamMember' ? <MemberDashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
+          element={user?.role === 'Member' ? <MemberDashboard user={user} onLogout={handleLogout} /> : <Navigate to="/" />} 
         />
         
         {/* Common Routes */}

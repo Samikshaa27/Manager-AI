@@ -16,6 +16,22 @@ Manager AI is an advanced AI-powered multi-agent project planning and management
 - **Secure Authentication:** Implements JWT-based authentication for secure user access and data protection.
 - **Modern Frontend:** A responsive and fast React frontend utilizing Vite and Tailwind CSS.
 
+## 📸 Product Screenshots
+
+Here is a visual overview of **Manager AI**'s premium, dynamic user interface:
+
+| 🚀 Landing & Portal | 📊 AI Executive Dashboard |
+|---|---|
+| ![Landing Page](./screenshots/screenshot1.png) | ![Dashboard](./screenshots/screenshot2.png) |
+
+| 📋 Interactive Kanban Board | 📉 High-Impact Reports |
+|---|---|
+| ![Kanban](./screenshots/screenshot3.png) | ![Reports](./screenshots/screenshot4.png) |
+
+| 👥 Dynamic Team Allocator |
+|---|
+| ![Team Allocation](./screenshots/screenshot5.png) |
+
 ## Tech Stack
 
 ### Backend

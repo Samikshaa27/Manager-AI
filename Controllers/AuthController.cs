@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using PlanAI.Data;
 using PlanAI.Models;
+using PlanAI.Helpers;
+using Microsoft.AspNetCore.Http;
 
 namespace PlanAI.Controllers
 {
@@ -28,21 +31,23 @@ namespace PlanAI.Controllers
         }
 
         [HttpPost("register")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest req)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
-                    return BadRequest("Email and password are required.");
+                    return BadRequest(ApiResponse<object>.Fail("Email and password are required."));
 
-                var role = string.IsNullOrWhiteSpace(req.Role) ? "TeamMember" : req.Role;
-                if (role != "ProjectManager" && role != "TeamMember")
-                    return BadRequest("Role must be 'ProjectManager' or 'TeamMember'.");
+                var role = string.IsNullOrWhiteSpace(req.Role) ? "Member" : req.Role;
+                if (role != "Admin" && role != "Member")
+                    return BadRequest(ApiResponse<object>.Fail("Role must be 'Admin' or 'Member'."));
 
                 var existing = _db.Users.FirstOrDefault(u => u.Email == req.Email);
 
                 if (existing != null)
-                    return Conflict("User with that email already exists.");
+                    return BadRequest(ApiResponse<object>.Fail("User with that email already exists."));
 
                 var user = new AppUser
                 {
@@ -55,23 +60,26 @@ namespace PlanAI.Controllers
                 _db.Users.Add(user);
                 await _db.SaveChangesAsync();
 
-                return StatusCode(201, new
+                return Ok(ApiResponse<object>.Ok(new
                 {
                     user.Id,
                     user.Name,
                     user.Email,
                     user.Role,
                     user.CreatedAt
-                });
+                }, "Registration successful"));
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"REGISTER ERROR: {ex.Message}\n{ex.InnerException?.Message}");
-                return StatusCode(500, new { error = "Registration failed.", detail = ex.Message });
+                return StatusCode(500, ApiResponse<object>.Fail($"Registration failed. {ex.Message}"));
             }
         }
 
         [HttpPost("login")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
         public IActionResult Login([FromBody] LoginRequest req)
         {
             try
@@ -79,10 +87,10 @@ namespace PlanAI.Controllers
                 var user = _db.Users.FirstOrDefault(u => u.Email == req.Email);
 
                 if (user == null)
-                    return Unauthorized(new { error = "Invalid email or password." });
+                    return Unauthorized(ApiResponse<object>.Fail("Invalid email or password."));
 
                 if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-                    return Unauthorized(new { error = "Invalid email or password." });
+                    return Unauthorized(ApiResponse<object>.Fail("Invalid email or password."));
 
                 var secret = _config["Auth:JwtSecret"] ?? "planai-super-secret-key-32-chars-minimum";
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
@@ -109,16 +117,16 @@ namespace PlanAI.Controllers
 
                 Console.WriteLine($"LOGIN SUCCESS: User={user.Email}");
 
-                return Ok(new
+                return Ok(ApiResponse<object>.Ok(new
                 {
                     token = tokenStr,
                     expires = token.ValidTo
-                });
+                }, "Login successful"));
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"LOGIN ERROR: {ex.Message}\n{ex.InnerException?.Message}");
-                return StatusCode(500, new { error = "Login failed.", detail = ex.Message });
+                return StatusCode(500, ApiResponse<object>.Fail($"Login failed. {ex.Message}"));
             }
         }
 
@@ -129,31 +137,31 @@ namespace PlanAI.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized("User ID not found in token claims.");
+                return Unauthorized(ApiResponse<object>.Fail("User ID not found in token claims."));
 
             if (!Guid.TryParse(userId, out var userGuid))
-                return Unauthorized("Invalid User ID format in token.");
+                return Unauthorized(ApiResponse<object>.Fail("Invalid User ID format in token."));
 
             var user = _db.Users.FirstOrDefault(u => u.Id == userGuid);
 
             if (user == null)
-                return Unauthorized("User not found in database.");
+                return Unauthorized(ApiResponse<object>.Fail("User not found in database."));
 
-            return Ok(new
+            return Ok(ApiResponse<object>.Ok(new
             {
                 user.Id,
                 user.Name,
                 user.Email,
                 user.Role,
                 user.CreatedAt
-            });
+            }));
         }
 
         ///////////////////////////////////////////////////////////////
         // LIST USERS (For Managers to find assignees)
         ///////////////////////////////////////////////////////////////
 
-        [Authorize(Roles = "ProjectManager,TeamMember")]
+        [Authorize(Roles = "Admin,Member")]
         [HttpGet("users")]
         public IActionResult GetUsers()
         {
@@ -161,14 +169,22 @@ namespace PlanAI.Controllers
                 .Select(u => new { u.Id, u.Name, u.Email, u.Role })
                 .ToList();
 
-            return Ok(users);
+            return Ok(ApiResponse<object>.Ok(users));
         }
 
         public class RegisterRequest
         {
+            [Required]
             public string Name { get; set; }
+            
+            [Required]
+            [EmailAddress]
             public string Email { get; set; }
+            
+            [Required]
+            [MinLength(8)]
             public string Password { get; set; }
+            
             public string Role { get; set; }
         }
 

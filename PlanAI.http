@@ -1,6 +1,8 @@
-@PlanAI_HostAddress = http://localhost:5211
+@baseUrl = http://localhost:5000
+@token = YOUR_JWT_TOKEN_HERE
 
-GET {{PlanAI_HostAddress}}/weatherforecast/
+GET {{baseUrl}}/weatherforecast/
 Accept: application/json
+Authorization: Bearer {{token}}
 
 ###

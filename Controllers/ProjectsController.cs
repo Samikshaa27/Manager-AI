@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using PlanAI.Data;
 using PlanAI.Models;
 using PlanAI.Services;
+using PlanAI.Helpers;
+using Microsoft.AspNetCore.Http;
 
 namespace PlanAI.Controllers
 {
@@ -38,12 +40,17 @@ namespace PlanAI.Controllers
             return null;
         }
 
+        [HttpPost]
         [HttpPost("generate")]
-        [Authorize(Roles = "ProjectManager")]
-        public async Task<ActionResult<ProjectPlan>> GeneratePlan([FromBody] GenerateProjectRequest request)
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(ApiResponse<ProjectPlan>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<ApiResponse<ProjectPlan>>> GeneratePlan([FromBody] GenerateProjectRequest request)
         {
             if (request == null || string.IsNullOrWhiteSpace(request.Description))
-                return BadRequest("Description is required.");
+                return BadRequest(ApiResponse<object>.Fail("Description is required."));
 
             var userId = GetCurrentUserId();
             if (userId == null) return Unauthorized();
@@ -54,11 +61,13 @@ namespace PlanAI.Controllers
             _db.ProjectPlans.Add(plan);
             await _db.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetProject), new { id = plan.Id }, plan);
+            return CreatedAtAction(nameof(GetProject), new { id = plan.Id }, ApiResponse<ProjectPlan>.Ok(plan, "Project generated successfully"));
         }
 
         [HttpGet]
-        public async Task<ActionResult<ProjectSummaryDto[]>> GetProjects()
+        [ProducesResponseType(typeof(ApiResponse<ProjectSummaryDto[]>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<ApiResponse<ProjectSummaryDto[]>>> GetProjects()
         {
             var userId = GetCurrentUserId();
             var list = await _db.ProjectPlans
@@ -73,11 +82,14 @@ namespace PlanAI.Controllers
                 })
                 .ToArrayAsync();
 
-            return Ok(list);
+            return Ok(ApiResponse<ProjectSummaryDto[]>.Ok(list));
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<ProjectPlan>> GetProject(Guid id)
+        [ProducesResponseType(typeof(ApiResponse<ProjectPlan>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse<ProjectPlan>>> GetProject(Guid id)
         {
             var userId = GetCurrentUserId();
             var plan = await _db.ProjectPlans
@@ -87,13 +99,35 @@ namespace PlanAI.Controllers
                 .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
             if (plan == null)
-                return NotFound();
+                return NotFound(ApiResponse<object>.Fail("Project not found."));
 
-            return Ok(plan);
+            return Ok(ApiResponse<ProjectPlan>.Ok(plan));
+        }
+
+        [HttpPut("{id:guid}")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(ApiResponse<ProjectPlan>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse<ProjectPlan>>> UpdateProject(Guid id, [FromBody] ProjectPlan dto)
+        {
+            var userId = GetCurrentUserId();
+            var plan = await _db.ProjectPlans.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+            if (plan == null) return NotFound(ApiResponse<object>.Fail("Project not found."));
+            plan.ProjectName = dto.ProjectName ?? plan.ProjectName;
+            await _db.SaveChangesAsync();
+            return Ok(ApiResponse<ProjectPlan>.Ok(plan));
         }
 
         [HttpPut("{id:guid}/tasks/{taskId:guid}/status")]
-        public async Task<ActionResult<ProjectTask>> UpdateTaskStatus(Guid id, Guid taskId, [FromBody] UpdateTaskStatusDto dto)
+        [ProducesResponseType(typeof(ApiResponse<ProjectTask>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<ApiResponse<ProjectTask>>> UpdateTaskStatus(Guid id, Guid taskId, [FromBody] UpdateTaskStatusDto dto)
         {
             var userId = GetCurrentUserId();
             var plan = await _db.ProjectPlans
@@ -102,15 +136,15 @@ namespace PlanAI.Controllers
                 .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
             if (plan == null)
-                return NotFound();
+                return NotFound(ApiResponse<object>.Fail("Project not found."));
 
             var phase = plan.Phases.FirstOrDefault(ph => ph.Tasks.Any(t => t.Id == taskId));
             if (phase == null)
-                return NotFound();
+                return NotFound(ApiResponse<object>.Fail("Phase not found."));
 
             var task = phase.Tasks.FirstOrDefault(t => t.Id == taskId);
             if (!Enum.TryParse<PlanAI.Models.TaskStatus>(dto?.Status ?? string.Empty, true, out var status))
-                return BadRequest("Invalid status value.");
+                return BadRequest(ApiResponse<object>.Fail("Invalid status value."));
 
             task.Status = status;
 
@@ -123,26 +157,34 @@ namespace PlanAI.Controllers
             }
 
             await _db.SaveChangesAsync();
-            return Ok(task);
+            return Ok(ApiResponse<ProjectTask>.Ok(task));
         }
 
         [HttpDelete("{id:guid}")]
-        [Authorize(Roles = "ProjectManager")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteProject(Guid id)
         {
             var userId = GetCurrentUserId();
             var plan = await _db.ProjectPlans.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             if (plan == null)
-                return NotFound();
+                return NotFound(ApiResponse<object>.Fail("Project not found."));
 
             _db.ProjectPlans.Remove(plan);
             await _db.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(ApiResponse<object>.Ok(null, "Project deleted."));
         }
 
         [HttpPost("{id:guid}/assign")]
-        [Authorize(Roles = "ProjectManager")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(ApiResponse<ProjectTask>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AssignTask(Guid id, [FromBody] AssignTaskRequest req)
         {
             var userId = GetCurrentUserId();
@@ -152,25 +194,27 @@ namespace PlanAI.Controllers
                 .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
             if (plan == null)
-                return NotFound("Project not found.");
+                return NotFound(ApiResponse<object>.Fail("Project not found."));
 
             var task = plan.Phases.SelectMany(ph => ph.Tasks).FirstOrDefault(t => t.Id == req.TaskId);
             if (task == null)
-                return NotFound("Task not found.");
+                return NotFound(ApiResponse<object>.Fail("Task not found."));
 
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == req.UserId);
             if (user == null)
-                return NotFound("User not found.");
+                return NotFound(ApiResponse<object>.Fail("User not found."));
 
             task.AssignedUserId = user.Id;
             task.AssignedTo = user.Name;
 
             await _db.SaveChangesAsync();
-            return Ok(task);
+            return Ok(ApiResponse<ProjectTask>.Ok(task));
         }
 
         [HttpGet("{id:guid}/dashboard")]
-        [Authorize(Roles = "ProjectManager")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetDashboard(Guid id)
         {
             var userId = GetCurrentUserId();
@@ -181,7 +225,7 @@ namespace PlanAI.Controllers
                 .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
             if (plan == null)
-                return NotFound();
+                return NotFound(ApiResponse<object>.Fail("Project not found."));
 
             var allTasks = plan.Phases.SelectMany(ph => ph.Tasks).ToList();
             var completedCount = allTasks.Count(t => t.Status == PlanAI.Models.TaskStatus.Completed);
@@ -219,7 +263,19 @@ namespace PlanAI.Controllers
                 AgentLog = plan.AgentLog
             };
 
-            return Ok(summary);
+            return Ok(ApiResponse<object>.Ok(summary));
+        }
+
+        [HttpPost("{id:guid}/orchestrate")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(ApiResponse<ProjectPlan>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<ApiResponse<ProjectPlan>>> Orchestrate(Guid id, [FromBody] GenerateProjectRequest request)
+        {
+            return await GeneratePlan(request);
         }
 
         public class AssignTaskRequest
