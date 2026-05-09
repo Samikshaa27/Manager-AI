@@ -37,7 +37,12 @@ const LandingPage = ({ onLogin }) => {
       onLogin(token, userRes.data);
     } catch (err) {
       console.error(err);
-      setError(isRegister ? 'Registration failed. Try a different email.' : 'Login failed. Please check your credentials.');
+      const backendError = err.response?.data?.message;
+      if (isRegister) {
+        setError(backendError || 'Registration failed. Please try a different email or check your password length (min 8 characters).');
+      } else {
+        setError(backendError || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }
