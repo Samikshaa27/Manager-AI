@@ -105,6 +105,38 @@ cd Manager-AI
    npm run dev
    ```
 
+## 🔒 Security & Environment Variables
+
+To keep your credentials secure, **never** commit live passwords, database connection strings, or API keys to a public repository. The application supports reading configurations directly from environment variables.
+
+### Local Development Setup
+1. Create an `appsettings.Development.json` file in the `Plan Ai updated` root folder (this file is already in `.gitignore` and will never be committed).
+2. Populate it with your local secrets:
+   ```json
+   {
+     "ConnectionStrings": {
+       "DefaultConnection": "your-neon-connection-string"
+     },
+     "OpenAI": {
+       "ApiKey": "your-groq-api-key"
+     },
+     "Auth": {
+       "JwtSecret": "your-jwt-secret-min-32-chars"
+     }
+   }
+   ```
+
+### Production Deployment (Render / Vercel)
+Set the following environment variables in your deployment platform settings (e.g., Render Web Service dashboard, Vercel project settings):
+
+| Variable Name | Description | Example Value |
+| :--- | :--- | :--- |
+| `ConnectionStrings__DefaultConnection` | Neon PostgreSQL Connection String | `Host=ep-your-database-pooler.onrender.com;...` |
+| `OpenAI__ApiKey` | Groq/OpenAI API Key | `gsk_your_groq_api_key` |
+| `Auth__JwtSecret` | JWT Secret Key (min 32 characters) | `your-secure-32-character-secret` |
+
+---
+
 ## Deployment
 
 The project is configured for deployment with a `render.yaml` file, supporting platforms like Render, Railway, or similar PaaS providers. It also includes a `Dockerfile` for containerized deployment.

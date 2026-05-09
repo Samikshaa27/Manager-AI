@@ -53,9 +53,17 @@ builder.Services.AddHttpClient("OpenAI", client =>
 // DATABASE (Neon PostgreSQL)
 ///////////////////////////////////////////////////////////////
 
+var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrEmpty(connectionString) || connectionString.Contains("your-neon"))
+{
+    connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        connectionString,
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
             maxRetryCount: 5,
             maxRetryDelay: TimeSpan.FromSeconds(10),
@@ -67,7 +75,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // JWT AUTHENTICATION
 ///////////////////////////////////////////////////////////////
 
-var jwtSecret = builder.Configuration["Auth:JwtSecret"] ?? "planai-super-secret-key-32-chars-minimum";
+var jwtSecret = Environment.GetEnvironmentVariable("Auth__JwtSecret")
+    ?? builder.Configuration["Auth:JwtSecret"]
+    ?? "planai-super-secret-key-32-chars-minimum";
+
+if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Contains("your-jwt"))
+{
+    jwtSecret = Environment.GetEnvironmentVariable("Auth__JwtSecret") ?? "planai-super-secret-key-32-chars-minimum";
+}
 var key = Encoding.UTF8.GetBytes(jwtSecret);
 
 builder.Services

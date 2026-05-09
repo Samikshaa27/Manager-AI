@@ -24,7 +24,11 @@ namespace PlanAI.Services
         public LlmService(IHttpClientFactory httpFactory, IConfiguration config, ILogger<LlmService> logger)
         {
             _httpFactory = httpFactory;
-            _apiKey = config["OpenAI:ApiKey"];
+            _apiKey = Environment.GetEnvironmentVariable("OpenAI__ApiKey") ?? config["OpenAI:ApiKey"];
+            if (string.IsNullOrEmpty(_apiKey) || _apiKey.Contains("your-groq"))
+            {
+                _apiKey = Environment.GetEnvironmentVariable("OpenAI__ApiKey");
+            }
             _logger = logger;
 
             try
