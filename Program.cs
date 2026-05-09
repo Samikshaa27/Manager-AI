@@ -61,6 +61,27 @@ if (string.IsNullOrEmpty(connectionString) || connectionString.Contains("your-ne
     connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 }
 
+// Automatically convert standard PostgreSQL URI format to Npgsql ADO.NET format if supplied
+if (connectionString != null && (connectionString.StartsWith("postgres://") || connectionString.StartsWith("postgresql://")))
+{
+    try
+    {
+        var uri = new Uri(connectionString);
+        var userInfo = uri.UserInfo.Split(':');
+        var username = Uri.UnescapeDataString(userInfo[0]);
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+
+        connectionString = $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;Timeout=30;Command Timeout=60;";
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error parsing connection string URI: {ex.Message}");
+    }
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
         connectionString,
