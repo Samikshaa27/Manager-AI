@@ -26,8 +26,9 @@ frontend/.env
 frontend/.env.local
 frontend/.env.development
 frontend/.env.development.local
-frontend/.env.test.local
+frontend/.env.production
 frontend/.env.production.local
+frontend/.env.test.local
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
