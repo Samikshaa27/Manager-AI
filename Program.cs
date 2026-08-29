@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PlanAI.Agents;
@@ -97,13 +98,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 ///////////////////////////////////////////////////////////////
 
 var jwtSecret = Environment.GetEnvironmentVariable("Auth__JwtSecret")
-    ?? builder.Configuration["Auth:JwtSecret"]
-    ?? "planai-super-secret-key-32-chars-minimum";
+    ?? builder.Configuration["Auth:JwtSecret"];
 
 if (string.IsNullOrEmpty(jwtSecret) || jwtSecret.Contains("your-jwt"))
 {
-    jwtSecret = Environment.GetEnvironmentVariable("Auth__JwtSecret") ?? "planai-super-secret-key-32-chars-minimum";
+    throw new InvalidOperationException(
+        "Auth:JwtSecret is required and must not contain placeholder values. " +
+        "Set environment variable 'Auth__JwtSecret' or configure 'Auth:JwtSecret' in appsettings.json with a secure 32+ character string.");
 }
+
 var key = Encoding.UTF8.GetBytes(jwtSecret);
 
 builder.Services
