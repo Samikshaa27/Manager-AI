@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using PlanAI.Agents;
 using PlanAI.Models;
 
@@ -29,19 +30,24 @@ namespace PlanAI.Services
         /// </summary>
         public async Task<ProjectPlan> GeneratePlanAsync(GenerateProjectRequest request)
         {
+            if (request == null || string.IsNullOrWhiteSpace(request.Description))
+            {
+                throw new ArgumentNullException(nameof(request), "Request and description are required for plan generation.");
+            }
+
             var context = new ProjectContext
             {
-                Description = request?.Description,
-                BudgetMin = request?.BudgetMin,
-                BudgetMax = request?.BudgetMax,
-                Currency = request?.Currency ?? "INR",
-                TeamMembers = request?.TeamMembers ?? new List<TeamMemberRequest>()
+                Description = request.Description,
+                BudgetMin = request.BudgetMin,
+                BudgetMax = request.BudgetMax,
+                Currency = request.Currency ?? "INR",
+                TeamMembers = request.TeamMembers ?? new List<TeamMemberRequest>()
             };
 
             _logger.LogInformation("Budget in context: {min} - {max}", context.BudgetMin, context.BudgetMax);
 
-            var description = request?.Description;
-            context.Plan.ProjectName = description?.Length > 40 ? description[..40] + "..." : (description ?? "Untitled Project");
+            var description = request.Description;
+            context.Plan.ProjectName = description.Length > 40 ? description[..40] + "..." : description;
             context.Plan.Description = description;
             context.Plan.CreatedAt = DateTime.UtcNow;
 
